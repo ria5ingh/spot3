@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Memory Melody</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #fdf6ee;
+      --surface:  #fff8f0;
+      --border:   #e8d8c4;
+      --accent:   #c0622f;
+      --accent2:  #e8a87c;
+      --text:     #2e1f0e;
+      --muted:    #8a6e56;
+      --radius:   14px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem 4rem;
+    }
+
+    /* ── Layout ── */
+    .container { max-width: 680px; margin: 0 auto; }
+
+    /* ── Header ── */
+    header { text-align: center; margin-bottom: 2.5rem; }
+    header .note { font-size: 1.5rem; margin-bottom: .5rem; }
+    header h1 {
+      font-family: 'Lora', serif;
+      font-size: 2.4rem;
+      color: var(--accent);
+      line-height: 1.15;
+    }
+    header p {
+      margin-top: .6rem;
+      color: var(--muted);
+      font-size: .95rem;
+      font-weight: 300;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    .card h2 {
+      font-family: 'Lora', serif;
+      font-size: 1.15rem;
+      margin-bottom: 1.2rem;
+      color: var(--accent);
+    }
+
+    /* ── Form ── */
+    .field { margin-bottom: 1.2rem; }
+    label {
+      display: block;
+      font-size: .82rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      margin-bottom: .4rem;
+    }
+    label .optional {
+      font-weight: 300;
+      text-transform: none;
+      letter-spacing: 0;
+      font-size: .8rem;
+    }
+    input, textarea {
+      width: 100%;
+      padding: .65rem .85rem;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      font-family: 'DM Sans', sans-serif;
+      font-size: .95rem;
+      color: var(--text);
+      transition: border-color .2s;
+      resize: vertical;
+    }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent2);
+    }
+    input::placeholder, textarea::placeholder { color: #bba899; }
+
+    /* ── Button ── */
+    button.generate {
+      width: 100%;
+      padding: .9rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .2s, transform .1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+    }
+    button.generate:hover { background: #a84f23; }
+    button.generate:active { transform: scale(.98); }
+    button.generate:disabled { background: #cbb9ad; cursor: not-allowed; }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: none;
+    }
+    button.generate.loading .spinner { display: block; }
+    button.generate.loading .btn-text::after { content: "Building playlist…"; }
+    button.generate:not(.loading) .btn-text::after { content: "✦  Generate Playlist"; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Status / Error ── */
+    .status {
+      text-align: center;
+      padding: .8rem;
+      border-radius: 8px;
+      font-size: .9rem;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+    .status.error   { background: #fde8e8; color: #b02020; display: block; }
+    .status.info    { background: #e8f3fd; color: #1a5a8a; display: block; }
+
+    /* ── Tags chip row ── */
+    .tags-section { margin-bottom: 1.5rem; }
+    .tags-section h3 {
+      font-size: .82rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      margin-bottom: .6rem;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+    .chip {
+      background: #f0e6da;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: .25rem .75rem;
+      font-size: .8rem;
+      color: var(--accent);
+    }
+
+    /* ── Playlist ── */
+    #playlist-section { display: none; }
+    #playlist-section h2 {
+      font-family: 'Lora', serif;
+      font-size: 1.4rem;
+      color: var(--accent);
+      margin-bottom: 1.2rem;
+      text-align: center;
+    }
+
+    .track-list { list-style: none; }
+    .track-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: .75rem .5rem;
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+      border-radius: 8px;
+    }
+    .track-item:last-child { border-bottom: none; }
+    .track-item:hover { background: #f5ece3; }
+
+    .track-num {
+      font-size: .8rem;
+      color: var(--muted);
+      min-width: 22px;
+      text-align: right;
+    }
+    .track-thumb {
+      width: 44px; height: 44px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+    .track-thumb-placeholder {
+      width: 44px; height: 44px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .track-info { flex: 1; min-width: 0; }
+    .track-name {
+      font-weight: 500;
+      font-size: .95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .track-artist { font-size: .82rem; color: var(--muted); }
+    .track-link {
+      font-size: .75rem;
+      color: var(--accent);
+      text-decoration: none;
+      flex-shrink: 0;
+      padding: .3rem .6rem;
+      border: 1px solid var(--accent2);
+      border-radius: 20px;
+      white-space: nowrap;
+      transition: background .15s;
+    }
+    .track-link:hover { background: var(--accent); color: #fff; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      font-size: .78rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="note">🎵</div>
+    <h1>Memory Melody</h1>
+    <p>Personalised music to reconnect with cherished memories</p>
+  </header>
+
+  <!-- Input Form -->
+  <div class="card">
+    <h2>Patient Profile</h2>
+    <form id="profile-form">
+
+      <div class="field">
+        <label>Birth Year</label>
+        <input type="number" id="birth_year" placeholder="e.g. 1942" min="1900" max="2005" />
+      </div>
+
+      <div class="field">
+        <label>Where They Grew Up</label>
+        <input type="text" id="hometown" placeholder="e.g. New Orleans, Louisiana" />
+      </div>
+
+      <div class="field">
+        <label>Language Spoken</label>
+        <input type="text" id="language" placeholder="e.g. English, Spanish, Cantonese" />
+      </div>
+
+      <div class="field">
+        <label>Cultural Background <span class="optional">(optional)</span></label>
+        <input type="text" id="culture" placeholder="e.g. African American, Irish, Puerto Rican" />
+      </div>
+
+      <div class="field">
+        <label>Life Period to Focus On <span class="optional">(optional)</span></label>
+        <input type="text" id="life_period" placeholder="e.g. childhood, teenage years, 20s, 30s" />
+      </div>
+
+      <div class="field">
+        <label>Songs They Resonated With <span class="optional">(optional — up to 3)</span></label>
+        <textarea id="resonant_songs" rows="3"
+          placeholder="e.g. &quot;What a Wonderful World&quot; by Louis Armstrong, &quot;Stand By Me&quot; by Ben E. King"></textarea>
+      </div>
+
+      <button type="submit" class="generate" id="gen-btn">
+        <div class="spinner"></div>
+        <span class="btn-text"></span>
+      </button>
+    </form>
+  </div>
+
+  <!-- Status messages -->
+  <div class="status" id="status"></div>
+
+  <!-- Results -->
+  <div id="playlist-section">
+    <div class="card tags-section" id="tags-card" style="display:none">
+      <h3>Music Profile Generated</h3>
+      <div id="tags-chips" class="chips"></div>
+    </div>
+
+    <div class="card">
+      <h2 id="playlist-heading">Your Personalised Playlist</h2>
+      <ul class="track-list" id="track-list"></ul>
+    </div>
+  </div>
+
+</div>
+
+<footer>Memory Melody &mdash; built for Alzheimer's care &nbsp;|&nbsp; Powered by Gemini &amp; Last.fm</footer>
+
+<script>
+  const form   = document.getElementById("profile-form");
+  const btn    = document.getElementById("gen-btn");
+  const status = document.getElementById("status");
+
+  function setStatus(msg, type = "info") {
+    status.textContent = msg;
+    status.className = `status ${type}`;
+  }
+  function clearStatus() { status.className = "status"; }
+
+  function setLoading(on) {
+    btn.disabled = on;
+    btn.classList.toggle("loading", on);
+  }
+
+  function renderTags(tags) {
+    const card  = document.getElementById("tags-card");
+    const chips = document.getElementById("tags-chips");
+    chips.innerHTML = "";
+
+    const all = [
+      ...(tags.eraTags      || []),
+      ...(tags.culturalTags || []),
+      ...(tags.artists      || []),
+    ];
+    if (!all.length) { card.style.display = "none"; return; }
+
+    all.forEach(t => {
+      const c = document.createElement("span");
+      c.className = "chip";
+      c.textContent = t;
+      chips.appendChild(c);
+    });
+    card.style.display = "block";
+  }
+
+  function renderPlaylist(playlist) {
+    const section = document.getElementById("playlist-section");
+    const list    = document.getElementById("track-list");
+    list.innerHTML = "";
+
+    playlist.forEach((track, i) => {
+      const li = document.createElement("li");
+      li.className = "track-item";
+
+      const thumb = track.image
+        ? `<img class="track-thumb" src="${track.image}" alt="" loading="lazy" />`
+        : `<div class="track-thumb-placeholder">♪</div>`;
+
+      const link = track.url
+        ? `<a class="track-link" href="${track.url}" target="_blank" rel="noopener">Last.fm ↗</a>`
+        : "";
+
+      li.innerHTML = `
+        <span class="track-num">${i + 1}</span>
+        ${thumb}
+        <div class="track-info">
+          <div class="track-name">${escHtml(track.name)}</div>
+          <div class="track-artist">${escHtml(track.artist)}</div>
+        </div>
+        ${link}
+      `;
+      list.appendChild(li);
+    });
+
+    section.style.display = "block";
+    section.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearStatus();
+    document.getElementById("playlist-section").style.display = "none";
+
+    const birth_year     = document.getElementById("birth_year").value.trim();
+    const hometown       = document.getElementById("hometown").value.trim();
+    const language       = document.getElementById("language").value.trim();
+    const culture        = document.getElementById("culture").value.trim();
+    const life_period    = document.getElementById("life_period").value.trim();
+    const resonant_songs = document.getElementById("resonant_songs").value.trim();
+
+    if (!birth_year && !hometown && !language) {
+      setStatus("Please fill in at least Birth Year, Hometown, or Language.", "error");
+      return;
+    }
+
+    setLoading(true);
+    setStatus("Analysing profile and generating music tags…");
+
+    try {
+      const res = await fetch("/api/generate-playlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ birth_year, hometown, language, culture, life_period, resonant_songs }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Server error");
+
+      clearStatus();
+      renderTags(data.tags);
+      renderPlaylist(data.playlist);
+
+      if (data.playlist.length === 0) {
+        setStatus("No tracks were found — try adjusting the profile details.", "error");
+      }
+    } catch (err) {
+      setStatus(`Error: ${err.message}`, "error");
+    } finally {
+      setLoading(false);
+    }
+  });
+</script>
+</body>
+</html>
