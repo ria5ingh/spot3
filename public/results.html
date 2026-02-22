@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rewind Radio — Recommendations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #D1DFF9;
+      --surface:  #CDE3FF;
+      --border:   #9999CC;
+      --accent:   #0000ac;
+      --accent2:  #C384FA;
+      --text:     #5863F9;
+      --muted:    #0c19d6;
+      --radius:   14px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      /*background: var(--bg);*/
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem 4rem;
+      min-height: 100vh;
+      margin: 0;
+      background: linear-gradient(
+        180deg,
+        #f6cef6 0%,
+        #747dd8 35%,
+        #eb9ff7 70%,
+        #71bcda 100%
+      );
+    }
+
+
+    .container { max-width: 760px; margin: 0 auto; }
+
+    header { text-align: center; margin-bottom: 1.8rem; }
+    header .note { font-size: 1.5rem; margin-bottom: .5rem; }
+    header h1 {
+      font-family: 'Lora', serif;
+      font-size: 2.1rem;
+      color: var(--accent);
+      line-height: 1.15;
+    }
+    header p {
+      margin-top: .6rem;
+      color: var(--muted);
+      font-size: .95rem;
+      font-weight: 300;
+    }
+
+    .actions {
+      display: flex;
+      gap: .6rem;
+      justify-content: center;
+      margin: 1rem 0 1.6rem;
+      flex-wrap: wrap;
+    }
+    .btn {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--accent);
+      padding: .6rem .9rem;
+      border-radius: 999px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: .9rem;
+      transition: transform .06s, background .15s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .btn:hover { background: #3434AB; }
+    .btn:active { transform: scale(.98); }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.6rem;
+      margin-bottom: 1rem;
+    }
+
+    .tags-section h3 {
+      font-size: .82rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      margin-bottom: .6rem;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+    .chip {
+      background: #D5CBEF;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: .25rem .75rem;
+      font-size: .8rem;
+      color: var(--accent);
+    }
+
+    .playlist-title {
+      font-family: 'Lora', serif;
+      font-size: 1.35rem;
+      color: var(--accent);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .track-list { list-style: none; }
+    .track-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: .75rem .5rem;
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+      border-radius: 8px;
+    }
+    .track-item:last-child { border-bottom: none; }
+    .track-item:hover { background: #80C0E5; }
+
+    .track-num {
+      font-size: .8rem;
+      color: var(--muted);
+      min-width: 22px;
+      text-align: right;
+    }
+    .track-thumb {
+      width: 44px; height: 44px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+    .track-thumb-placeholder {
+      width: 44px; height: 44px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      color: #fff;
+    }
+    .track-info { flex: 1; min-width: 0; }
+    .track-name {
+      font-weight: 500;
+      font-size: .95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .track-artist { font-size: .82rem; color: var(--muted); }
+    .track-link {
+      font-size: .75rem;
+      color: var(--accent);
+      text-decoration: none;
+      flex-shrink: 0;
+      padding: .3rem .6rem;
+      border: 1px solid var(--accent2);
+      border-radius: 20px;
+      white-space: nowrap;
+      transition: background .15s;
+    }
+    .track-link:hover { background: var(--accent); color: #80C0E5; }
+
+    .status {
+      text-align: center;
+      padding: .8rem;
+      border-radius: 8px;
+      font-size: .9rem;
+      margin: 1rem 0;
+      background: #80C0E5;
+      color: #b02020;
+      display: none;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 2.5rem;
+      font-size: .78rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+
+<body>
+<div class="container">
+
+  <header>
+    <div class="note">🎶</div>
+    <h1>Your Recommendations</h1>
+    <p>Based on the patient profile, here are songs to spark recognition and comfort.</p>
+  </header>
+
+  <div class="actions">
+    <a class="btn" href="/index.html">← Back to profile</a>
+    <button class="btn" id="clear-btn">Clear results</button>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <div class="card tags-section" id="tags-card" style="display:none">
+    <h3>Music Profile Generated</h3>
+    <div id="tags-chips" class="chips"></div>
+  </div>
+
+  <div class="card">
+    <div class="playlist-title">Your Personalised Playlist</div>
+    <ul class="track-list" id="track-list"></ul>
+  </div>
+
+</div>
+
+<footer> muscial comfort built for alzheimer's patients | powered by Gemini &amp; Last.fm</footer>
+
+<script>
+  const status = document.getElementById("status");
+
+  function setStatus(msg) {
+    status.textContent = msg;
+    status.style.display = "block";
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+
+  function renderTags(tags) {
+    const card  = document.getElementById("tags-card");
+    const chips = document.getElementById("tags-chips");
+    chips.innerHTML = "";
+
+    const all = [
+      ...(tags.eraTags      || []),
+      ...(tags.culturalTags || []),
+      ...(tags.artists      || []),
+    ];
+
+    if (!all.length) { card.style.display = "none"; return; }
+
+    all.forEach(t => {
+      const c = document.createElement("span");
+      c.className = "chip";
+      c.textContent = t;
+      chips.appendChild(c);
+    });
+    card.style.display = "block";
+  }
+
+  function renderPlaylist(playlist) {
+    const list = document.getElementById("track-list");
+    list.innerHTML = "";
+
+    if (!playlist || playlist.length === 0) {
+      setStatus("No tracks were found — go back and adjust the profile details.");
+      return;
+    }
+
+    playlist.forEach((track, i) => {
+      const li = document.createElement("li");
+      li.className = "track-item";
+
+      const thumb = track.image
+        ? `<img class="track-thumb" src="${track.image}" alt="" loading="lazy" />`
+        : `<div class="track-thumb-placeholder">♪</div>`;
+
+      const link = track.url
+        ? `<a class="track-link" href="${track.url}" target="_blank" rel="noopener">Last.fm ↗</a>`
+        : "";
+
+      li.innerHTML = `
+        <div class="track-info">
+          <div class="track-name">${escHtml(track.name)}</div>
+          <div class="track-artist">${escHtml(track.artist)}</div>
+        </div>
+        ${link}
+      `;
+      list.appendChild(li);
+    });
+  }
+
+  // Load from sessionStorage
+  const raw = sessionStorage.getItem("memory_melody_result");
+  if (!raw) {
+    setStatus("No saved recommendations found. Please go back and generate a playlist first.");
+  } else {
+    try {
+      const data = JSON.parse(raw);
+      renderTags(data.tags || {});
+      renderPlaylist(data.playlist || []);
+    } catch (e) {
+      setStatus("Saved data was corrupted. Please go back and generate again.");
+    }
+  }
+
+  // Clear button
+  document.getElementById("clear-btn").addEventListener("click", () => {
+    sessionStorage.removeItem("memory_melody_result");
+    window.location.href = "/index.html";
+  });
+</script>
+</body>
+</html>

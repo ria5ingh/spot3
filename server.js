@@ -1,7 +1,12 @@
+//encrpyt api keys
 import "dotenv/config";
+//webserver framework for Node JS
 import express from "express";
+//Node JS module so u don't have to worry format of file paths
 import path from "path";
+//lets you make file a url so you can open on browser to test
 import { fileURLToPath } from "url";
+//importing gemini
 import { GoogleGenAI } from "@google/genai";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -14,7 +19,7 @@ const LASTFM_BASE = "https://ws.audioscrobbler.com/2.0/";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// ── 1. Build user message text ──────────────────────────────────────────────
+// Build user message text (builds a list that can be readable by the AI model)
 function buildUserMessage(input) {
   const { birth_year, hometown, language, culture, life_period, resonant_songs } = input;
   const lines = [
@@ -28,7 +33,8 @@ function buildUserMessage(input) {
   return lines.join("\n");
 }
 
-// ── 2. Call Gemini via @google/genai SDK ────────────────────────────────────
+/*Call Gemini via @google/genai SDK (makes specific tags based on user input (ie. eraTags (2 decades), culturalTags (8 genres), 
+artists, countryISO), makes the tags JSON format. )*/
 async function getTagsFromGemini(userInput) {
   const config = {
     maxOutputTokens: 2048,
@@ -57,7 +63,7 @@ Return ONLY the JSON object. No markdown, no explanation.`,
 
   // Stream the response and collect chunks
   const stream = await ai.models.generateContentStream({
-    model: "gemini-flash-latest",
+    model: "gemini-2.5-flash",
     config,
     contents,
   });
@@ -72,7 +78,8 @@ Return ONLY the JSON object. No markdown, no explanation.`,
   return JSON.parse(raw);
 }
 
-// ── 3. Last.fm helpers ──────────────────────────────────────────────────────
+//---LAST FM API
+// Last.fm helpers 
 async function lastfmTagTopTracks(tag, limit = 15) {
   const url = new URL(LASTFM_BASE);
   url.search = new URLSearchParams({
@@ -118,7 +125,7 @@ function normaliseTrack(track, source) {
 }
 
 // Deduplicate by "artist – name"
-function dedupe(tracks) {
+function clean(tracks) {
   const seen = new Set();
   return tracks.filter((t) => {
     const key = `${t.artist}|||${t.name}`.toLowerCase();
@@ -128,7 +135,7 @@ function dedupe(tracks) {
   });
 }
 
-// ── 4. Main playlist builder ────────────────────────────────────────────────
+//Main playlist builder
 async function buildPlaylist(tags) {
   const allTracks = [];
 
@@ -160,14 +167,14 @@ async function buildPlaylist(tags) {
     })
   );
 
-  const unique = dedupe(allTracks);
+  const unique = clean(allTracks);
 
   // Shuffle for variety then cap at 25
   const shuffled = unique.sort(() => Math.random() - 0.5).slice(0, 25);
   return shuffled;
 }
 
-// ── 5. API Route ────────────────────────────────────────────────────────────
+//API Route
 app.post("/api/generate-playlist", async (req, res) => {
   try {
     const userInput = req.body;
